@@ -1,0 +1,71 @@
+from google.colab.patches import cv2_imshow #import OpenCV
+from IPython.display import display    #import PIL
+
+# Standard imports
+import cv2
+import numpy as np
+from PIL import Image
+
+# Path to your image (will be overwritten by uploaded file)
+img_path = "noisy_image_sample.jpg"
+
+# 1️⃣ OpenCV: Load the image
+from google.colab import files
+
+uploaded = files.upload()
+# Get the actual filename after upload, in case it was renamed (e.g., noisy_image_sample (2).jpg)
+if uploaded:
+    img_path = list(uploaded.keys())[0]
+
+img_cv = cv2.imread(img_path)
+
+# ✅ For Colab: use this to display OpenCV image inline
+if img_cv is None:
+    print(f"Error: Image at path '{img_path}' not found or could not be loaded.")
+else:
+    cv2_imshow(img_cv)
+
+    #Clean the Image using:
+    #1) Denoising Using Bilateral Filtering
+    bilateral = cv2.bilateralFilter(img_cv, 9, 75, 75)
+
+    # Show results using cv2_imshow
+    print("Original Image:")
+    cv2_imshow(img_cv)
+
+    print("Bilateral Filtering:")
+    cv2_imshow(bilateral)
+    # cv2.waitKey(0) and cv2.destroyAllWindows() are not needed with cv2_imshow
+
+    # 2) Contrast Enhancement
+    # Convert bilateral image to grayscale for contrast enhancement operations
+    img_gray = cv2.cvtColor(bilateral, cv2.COLOR_BGR2GRAY)
+
+    # Apply Histogram Equalization, NEEDS Grayscale
+    hist_eq = cv2.equalizeHist(img_gray)
+
+    # Show results using cv2_imshow
+    print("Bilateral Grayscale:")
+    cv2_imshow(img_gray)
+    print("Histogram Equalization:")
+    cv2_imshow(hist_eq)
+
+    # 3) Thresholding
+
+    # Apply simple thresholding
+    _, thresh_simple = cv2.threshold(hist_eq, 127, 255, cv2.THRESH_BINARY)
+
+    # # Apply adaptive thresholding
+    # thresh_adaptive = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+    # Show results
+    print("Simple Threshold:")
+    cv2_imshow(thresh_simple)
+    # print("Adaptive Threshold:")
+    # cv2_imshow(thresh_adaptive)
+
+    #save to new file
+    cleaned_img = cv2.imwrite("cleaned_image.jpg", thresh_simple)
+
+    #download
+    files.download("cleaned_image.jpg")

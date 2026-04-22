@@ -1,0 +1,67 @@
+import json #import json
+from google.colab import files #lets you upload files from ur computer
+
+#Step 1) Upload JSON file
+uploaded = files.upload() #select files to uploas
+
+#Step 2) Load JSON into Python -> read file and make it acessible in python
+with open("sample.json", "r") as file:
+  data = json.load(file) #python dictionary
+print(data)
+
+#Step 3) Retrieve all order IDs, and total amounts
+all_order_ids = []
+all_total_amounts = []
+
+for customer_data in data:
+    for order in customer_data.get("orders", []): #loop thru ea order for customer, if customer had no orders returns an empty list
+        all_order_ids.append(order["order_id"]) #append order id into new list of order ids
+        all_total_amounts.append(order["total"]) #append total amount into new list of total amounts
+
+print("\nOrder IDs: ", all_order_ids)
+print("\nTotal Amounts: ", all_total_amounts)
+
+#Step 4) Normalizes the JSON structure using Pandas to create a flat DataFrame showing customer_id, order_id, product, quantity, and total.
+import pandas as pd #import pandas
+
+flattened_data = []
+
+for customer_data in data:
+    customer_id = customer_data.get("customer_id")
+    name = customer_data.get("name")
+    email = customer_data.get("email")
+
+    for order in customer_data.get("orders", []):
+        order_id = order.get("order_id")
+        date = order.get("date")
+        total = order.get("total")
+        payment_method = order.get("payment", {}).get("method")
+        payment_status = order.get("payment", {}).get("status")
+
+        for item in order.get("items", []):
+            product = item.get("product")
+            price = item.get("price")
+            quantity = item.get("quantity")
+
+            flattened_data.append({
+                "customer_id": customer_id,
+                "order_id": order_id,
+                "product": product,
+                "quantity": quantity,
+                "total_order_amount": total # Renamed to avoid confusion with item price
+            })
+
+df = pd.DataFrame(flattened_data)
+
+print("\nFlattened DataFrame:")
+display(df.head())
+
+#Step 5) Save the processed DataFrame back into a new JSON file and submit the file link below. Don’t forget to give view access.
+# 5a) Convert DataFrame back to JSON file
+df.to_json("processed_orders.json", orient="records", indent=4)
+# 5b) Downlad file from colab
+files.download("processed_orders.json")
+
+#Step 6) Upload Downloaded file to google drive
+
+#Step 7) Share
